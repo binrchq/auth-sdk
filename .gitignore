@@ -1,0 +1,8 @@
+**/node_modules/
+**/dist/
+**/.pnpm-store/
+**/*.lock
+!**/pnpm-lock.yaml
+**/target/
+**/generated/
+**/.DS_Store
