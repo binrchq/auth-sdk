@@ -1,6 +1,6 @@
 [package]
 name = "binrc-auth"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
 description = "Binrc external auth SDK for Rust (Axum) — OIDC + PKCE server-side session handling"
 
