@@ -1,0 +1,44 @@
+[package]
+name = "binrc-auth"
+version = "0.1.0"
+edition = "2021"
+description = "Binrc external auth SDK for Rust (Axum) — OIDC + PKCE server-side session handling"
+
+[dependencies]
+binrc-auth-core = { path = "../auth-core" }
+
+# Web framework
+axum = { version = "0.7", features = ["macros"] }
+tower = { version = "0.4" }
+http = "1.0"
+
+# Async runtime
+tokio = { version = "1.0", features = ["full"] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Encoding
+base64 = "0.21"
+
+# HTTP client for backend token-exchange calls
+reqwest = { version = "0.11", default-features = false, features = ["json", "rustls-tls"] }
+
+# Timestamp arithmetic
+chrono = { version = "0.4", features = ["serde"] }
+
+# Hashing — SHA-256 for PKCE code challenge
+sha2 = "0.10"
+
+# Random number generation
+rand = "0.8"
+
+# Async traits
+async-trait = "0.1"
+
+# Error handling
+thiserror = "1.0"
+
+[dev-dependencies]
+tokio = { version = "1.0", features = ["full", "test-util"] }

@@ -1,0 +1,37 @@
+{
+  "name": "@binrc/address-layout",
+  "version": "1.0.0",
+  "description": "Address layout, postal code validation, and GeoNames-backed lookup SDK",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./formats": {
+      "types": "./dist/formats.d.ts",
+      "import": "./dist/formats.js",
+      "default": "./dist/formats.js"
+    },
+    "./layouts": {
+      "types": "./dist/layouts.d.ts",
+      "import": "./dist/layouts.js",
+      "default": "./dist/layouts.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "build:data": "node scripts/build-data.js",
+    "import:layouts": "node scripts/import-layouts.js",
+    "dev": "tsc -w"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0"
+  },
+  "packageManager": "pnpm@10.33.0"
+}

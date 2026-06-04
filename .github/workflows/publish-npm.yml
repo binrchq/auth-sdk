@@ -1,0 +1,71 @@
+name: Publish npm packages
+
+# Trigger by pushing a tag: @binrc/<package>@<version>
+# Examples:
+#   git tag @binrc/auth@1.2.0        && git push origin @binrc/auth@1.2.0
+#   git tag @binrc/auth-native@1.0.1 && git push origin @binrc/auth-native@1.0.1
+#   git tag @binrc/auth-dx@1.0.0     && git push origin @binrc/auth-dx@1.0.0
+#   git tag @binrc/address-layout@1.0.0 && git push origin @binrc/address-layout@1.0.0
+on:
+  push:
+    tags:
+      - '@binrc/auth@*'
+      - '@binrc/auth-native@*'
+      - '@binrc/auth-dx@*'
+      - '@binrc/address-layout@*'
+
+jobs:
+  publish:
+    name: Publish ${{ github.ref_name }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write  # npm provenance
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Tag format: @binrc/<slug>@<version>
+      - name: Resolve package
+        id: pkg
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          SLUG="${TAG#@binrc/}"        # auth-native@1.0.1
+          VERSION="${SLUG##*@}"        # 1.0.1
+          SLUG="${SLUG%@*}"            # auth-native
+          echo "slug=$SLUG"           >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION"     >> "$GITHUB_OUTPUT"
+          echo "Publishing @binrc/$SLUG @ $VERSION"
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install
+        working-directory: javascript/${{ steps.pkg.outputs.slug }}
+        run: pnpm install --frozen-lockfile
+
+      - name: Sync version from tag
+        working-directory: javascript/${{ steps.pkg.outputs.slug }}
+        run: |
+          node -e "
+            const fs = require('fs');
+            const p = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+            p.version = '${{ steps.pkg.outputs.version }}';
+            fs.writeFileSync('package.json', JSON.stringify(p, null, 2) + '\n');
+          "
+
+      - name: Build
+        working-directory: javascript/${{ steps.pkg.outputs.slug }}
+        run: pnpm build
+
+      - name: Publish
+        working-directory: javascript/${{ steps.pkg.outputs.slug }}
+        run: pnpm publish --no-git-checks --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

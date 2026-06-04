@@ -1,0 +1,4 @@
+generated/
+dist/
+dist-scripts/
+node_modules/
