@@ -1,39 +1,23 @@
 name: Publish npm packages
 
-# Trigger by pushing a tag: <package>-v<version>
-# Examples:
-#   git tag auth-v1.2.0           && git push origin auth-v1.2.0
-#   git tag auth-native-v1.0.1    && git push origin auth-native-v1.0.1
-#   git tag auth-dx-v1.0.0        && git push origin auth-dx-v1.0.0
-#   git tag address-layout-v1.0.0 && git push origin address-layout-v1.0.0
 on:
   push:
     tags:
-      - 'auth-v*'
-      - 'auth-native-v*'
-      - 'auth-dx-v*'
-      - 'address-layout-v*'
+      - 'v*'
 
 jobs:
   publish:
-    name: Publish ${{ github.ref_name }}
+    name: Publish ${{ matrix.pkg }}
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       id-token: write
+    strategy:
+      matrix:
+        pkg: [auth, auth-native, auth-dx, address-layout]
 
     steps:
       - uses: actions/checkout@v4
-
-      # Tag format: <slug>-v<version>  e.g. auth-native-v1.0.1
-      - name: Resolve package
-        id: pkg
-        run: |
-          TAG="${GITHUB_REF_NAME}"
-          VERSION="${TAG##*-v}"
-          SLUG="${TAG%-v*}"
-          echo "slug=$SLUG"       >> "$GITHUB_OUTPUT"
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - uses: pnpm/action-setup@v4
         with:
@@ -45,25 +29,26 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install
-        working-directory: javascript/${{ steps.pkg.outputs.slug }}
+        working-directory: javascript/${{ matrix.pkg }}
         run: pnpm install --frozen-lockfile
 
-      - name: Sync version
-        working-directory: javascript/${{ steps.pkg.outputs.slug }}
+      - name: Sync version from tag
+        working-directory: javascript/${{ matrix.pkg }}
         run: |
+          VERSION="${GITHUB_REF_NAME#v}"
           node -e "
             const fs = require('fs');
             const p = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-            p.version = '${{ steps.pkg.outputs.version }}';
+            p.version = '$VERSION';
             fs.writeFileSync('package.json', JSON.stringify(p, null, 2) + '\n');
           "
 
       - name: Build
-        working-directory: javascript/${{ steps.pkg.outputs.slug }}
+        working-directory: javascript/${{ matrix.pkg }}
         run: pnpm build
 
       - name: Publish
-        working-directory: javascript/${{ steps.pkg.outputs.slug }}
+        working-directory: javascript/${{ matrix.pkg }}
         run: pnpm publish --no-git-checks --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
