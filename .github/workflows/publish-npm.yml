@@ -1,18 +1,18 @@
 name: Publish npm packages
 
-# Trigger by pushing a tag: @binrc/<package>@<version>
+# Trigger by pushing a tag: <package>-v<version>
 # Examples:
-#   git tag @binrc/auth@1.2.0        && git push origin @binrc/auth@1.2.0
-#   git tag @binrc/auth-native@1.0.1 && git push origin @binrc/auth-native@1.0.1
-#   git tag @binrc/auth-dx@1.0.0     && git push origin @binrc/auth-dx@1.0.0
-#   git tag @binrc/address-layout@1.0.0 && git push origin @binrc/address-layout@1.0.0
+#   git tag auth-v1.2.0           && git push origin auth-v1.2.0
+#   git tag auth-native-v1.0.1    && git push origin auth-native-v1.0.1
+#   git tag auth-dx-v1.0.0        && git push origin auth-dx-v1.0.0
+#   git tag address-layout-v1.0.0 && git push origin address-layout-v1.0.0
 on:
   push:
     tags:
-      - '@binrc/auth@*'
-      - '@binrc/auth-native@*'
-      - '@binrc/auth-dx@*'
-      - '@binrc/address-layout@*'
+      - 'auth-v*'
+      - 'auth-native-v*'
+      - 'auth-dx-v*'
+      - 'address-layout-v*'
 
 jobs:
   publish:
@@ -20,22 +20,20 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write  # npm provenance
+      id-token: write
 
     steps:
       - uses: actions/checkout@v4
 
-      # Tag format: @binrc/<slug>@<version>
+      # Tag format: <slug>-v<version>  e.g. auth-native-v1.0.1
       - name: Resolve package
         id: pkg
         run: |
           TAG="${GITHUB_REF_NAME}"
-          SLUG="${TAG#@binrc/}"        # auth-native@1.0.1
-          VERSION="${SLUG##*@}"        # 1.0.1
-          SLUG="${SLUG%@*}"            # auth-native
-          echo "slug=$SLUG"           >> "$GITHUB_OUTPUT"
-          echo "version=$VERSION"     >> "$GITHUB_OUTPUT"
-          echo "Publishing @binrc/$SLUG @ $VERSION"
+          VERSION="${TAG##*-v}"
+          SLUG="${TAG%-v*}"
+          echo "slug=$SLUG"       >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - uses: pnpm/action-setup@v4
         with:
@@ -50,7 +48,7 @@ jobs:
         working-directory: javascript/${{ steps.pkg.outputs.slug }}
         run: pnpm install --frozen-lockfile
 
-      - name: Sync version from tag
+      - name: Sync version
         working-directory: javascript/${{ steps.pkg.outputs.slug }}
         run: |
           node -e "
