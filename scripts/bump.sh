@@ -46,18 +46,18 @@ done
 
 # ── Git tags ──────────────────────────────────────────────────────────────────
 echo ""
-echo "Creating git tags (run from inside the auth-sdk repo):"
+echo "Creating git tags:"
 TAGS=(
-  "@binrc/auth@$VERSION"
-  "@binrc/auth-native@$VERSION"
-  "@binrc/auth-dx@$VERSION"
-  "@binrc/address-layout@$VERSION"
-  "binrc-auth@$VERSION"
-  "binrc-auth-native@$VERSION"
-  "binrc-auth-core@$VERSION"
-  "auth-sdk/go/auth@$VERSION"
-  "auth-sdk/go/auth-native@$VERSION"
-  "auth-sdk/go/auth-core@$VERSION"
+  "auth-v$VERSION"
+  "auth-native-v$VERSION"
+  "auth-dx-v$VERSION"
+  "address-layout-v$VERSION"
+  "binrc-auth-v$VERSION"
+  "binrc-auth-native-v$VERSION"
+  "binrc-auth-core-v$VERSION"
+  "go/auth-v$VERSION"
+  "go/auth-native-v$VERSION"
+  "go/auth-core-v$VERSION"
 )
 for tag in "${TAGS[@]}"; do
   git tag "$tag"
@@ -65,5 +65,5 @@ for tag in "${TAGS[@]}"; do
 done
 
 echo ""
-echo "Done. Push tags with:"
+echo "Push tags (npm workflow triggers on auth*-v* only):"
 echo "  git push origin ${TAGS[*]}"
