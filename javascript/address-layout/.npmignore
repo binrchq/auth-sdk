@@ -1,0 +1,10 @@
+# npm 发布时不忽略 dist
+# 其他文件照常忽略
+node_modules/
+.pnpm-store/
+src/
+scripts/
+tsconfig*.json
+*.lock
+!pnpm-lock.yaml
+.DS_Store
