@@ -1,6 +1,6 @@
 {
   "name": "@binrc/auth-native",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Binrc authentication SDK for native clients — Electron, Tauri, CLI, IoT. No DOM dependencies.",
   "license": "MIT",
   "type": "module",

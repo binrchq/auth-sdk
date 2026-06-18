@@ -1,6 +1,6 @@
 {
   "name": "@binrc/auth-dx",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Binrc DX cookie reader — read-only access to public client-side cookies",
   "license": "MIT",
   "type": "module",
