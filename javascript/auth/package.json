@@ -1,6 +1,6 @@
 {
   "name": "@binrc/auth",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Binrc authentication client SDK — top-level redirect, FedCM, signIn/checkSession/signOut",
   "license": "MIT",
   "type": "module",
