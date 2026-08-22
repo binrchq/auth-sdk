@@ -1,6 +1,6 @@
 // Package authnative provides authentication helpers for native clients
 // (CLI tools, IoT devices, server-side daemons) that interact with the
-// Binrc Adapter BFF. No external dependencies — standard library only.
+// Binrc Adapter BFF. No public dependencies — standard library only.
 //
 // Adapter endpoints used:
 //

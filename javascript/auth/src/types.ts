@@ -25,7 +25,7 @@ export interface AuthClientConfig {
    * for popup/tab flow. When set, signIn() uses popup/tab instead of redirect.
    * (default: "/auth/prepare")
    *
-   * ⚠️ Do not expose this to external/third-party SDK consumers.
+   * ⚠️ Do not expose this to public/third-party SDK consumers.
    */
   prepareEndpoint?: string
   /**

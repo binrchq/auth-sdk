@@ -23,7 +23,7 @@ type RedisStore interface {
 	GetDel(ctx context.Context, key string) (string, error)
 }
 
-// Config holds all configuration for the external (third-party) auth SDK.
+// Config holds all configuration for the public (third-party) auth SDK.
 type Config struct {
 	// AdapterURL is the auth service base URL (default: "https://auth.binrc.com").
 	AdapterURL string
@@ -54,7 +54,7 @@ type Config struct {
 	HTTPClient *http.Client
 }
 
-// SDK is the external (third-party) auth SDK instance.
+// SDK is the public (third-party) auth SDK instance.
 type SDK struct {
 	cfg Config
 }
@@ -451,8 +451,8 @@ func (s *SDK) stateKey(state string) string {
 func (s *SDK) cookieName() string {
 	base := s.cfg.SessionCookieName
 	if base == "" {
-		// Default matches §12.1: __Secure-binrc-external-auth.session-token
-		base = "binrc-external-auth.session-token"
+		// Default matches §12.1: __Secure-binrc-public-auth.session-token
+		base = "binrc-public-auth.session-token"
 	}
 	return "__Secure-" + base
 }

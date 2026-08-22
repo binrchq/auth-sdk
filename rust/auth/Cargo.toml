@@ -2,7 +2,7 @@
 name = "binrc-auth"
 version = "1.0.1"
 edition = "2021"
-description = "Binrc external auth SDK for Rust (Axum) — OIDC + PKCE server-side session handling"
+description = "Binrc public auth SDK for Rust (Axum) — OIDC + PKCE server-side session handling"
 
 [dependencies]
 binrc-auth-core = { path = "../auth-core" }

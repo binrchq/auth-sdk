@@ -13,7 +13,7 @@ pub trait RedisStore: Send + Sync + 'static {
     async fn get_del(&self, key: &str) -> Result<Option<String>, String>;
 }
 
-/// All configuration for the external (third-party) auth SDK.
+/// All configuration for the public (third-party) auth SDK.
 #[derive(Clone)]
 pub struct Config {
     /// Auth-service base URL. Default: `"https://auth.binrc.com"`.
@@ -44,7 +44,7 @@ pub struct Config {
 
     /// Overrides the session-cookie name.
     /// The final cookie name is `"__Secure-" + session_cookie_name`.
-    /// Default base: `"binrc-external-auth.session-token"`.
+    /// Default base: `"binrc-public-auth.session-token"`.
     pub session_cookie_name: String,
 
     /// Redis key prefix for PKCE state. Default: `"oauth:ext:"`.
@@ -97,7 +97,7 @@ impl Config {
     /// Returns the effective cookie name (with `__Secure-` prefix).
     pub(crate) fn cookie_name(&self) -> String {
         let base = if self.session_cookie_name.is_empty() {
-            "binrc-external-auth.session-token"
+            "binrc-public-auth.session-token"
         } else {
             &self.session_cookie_name
         };
