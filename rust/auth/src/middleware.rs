@@ -49,12 +49,12 @@ pub async fn require_session(
         .map_err(|_| SessionMiddlewareError::InvalidSession)?;
 
     // Check expiry
-    if payload.x > 0 && chrono::Utc::now().timestamp() > payload.x {
+    if payload.exp > 0 && chrono::Utc::now().timestamp() > payload.exp {
         return Err(SessionMiddlewareError::Expired);
     }
 
     // Inject subject string (cheap clone)
-    let subject: String = payload.s.clone();
+    let subject: String = payload.sub.clone();
     let payload_arc = Arc::new(payload);
 
     request.extensions_mut().insert(payload_arc);

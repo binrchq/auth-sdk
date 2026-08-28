@@ -2,10 +2,9 @@
 //! Delegates to binrc-auth-core for the actual crypto primitives,
 //! ensuring byte-for-byte compatibility with the Go auth-core and all other SDKs.
 
-use binrc_auth_core::{decrypt_aes_gcm, encrypt_aes_gcm, AuthError, SessionPayload};
 use std::time::{SystemTime, UNIX_EPOCH};
-
-pub use binrc_auth_core::SessionPayload as SessionPayloadType;
+use binrc_auth_core::{decrypt_aes_gcm, encrypt_aes_gcm, AuthError};
+pub use binrc_auth_core::SessionPayload;
 
 /// Encrypt a `SessionPayload` to a base64url string using AES-256-GCM.
 pub fn encrypt_session(payload: &SessionPayload, secret: &str) -> Result<String, AuthError> {
@@ -14,11 +13,11 @@ pub fn encrypt_session(payload: &SessionPayload, secret: &str) -> Result<String,
 }
 
 /// Decrypt a base64url AES-256-GCM ciphertext and deserialize the `SessionPayload`.
-/// Returns `AuthError::SessionExpired` when `payload.x > 0` and the expiry has passed.
+/// Returns `AuthError::SessionExpired` when `payload.exp > 0` and the expiry has passed.
 pub fn decrypt_session(encrypted: &str, secret: &str) -> Result<SessionPayload, AuthError> {
     let plaintext = decrypt_aes_gcm(encrypted, secret)?;
     let p: SessionPayload = serde_json::from_slice(&plaintext)?;
-    if p.x > 0 && now_unix() > p.x {
+    if p.exp > 0 && now_unix() > p.exp {
         return Err(AuthError::SessionExpired);
     }
     Ok(p)

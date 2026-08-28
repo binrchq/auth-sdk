@@ -24,11 +24,16 @@ pub enum AuthError {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SessionPayload {
-    pub a: String,
-    pub r: String,
-    pub d: String,
-    pub s: String,
-    pub x: i64,
+    #[serde(rename = "access_token")]
+    pub access_token: String,
+    #[serde(rename = "refresh_token", default)]
+    pub refresh_token: String,
+    #[serde(rename = "id_token", default)]
+    pub id_token: String,
+    #[serde(rename = "sub")]
+    pub sub: String,
+    #[serde(rename = "exp")]
+    pub exp: i64,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -59,18 +64,23 @@ pub fn encrypt_aes_gcm(plaintext: &[u8], secret: &str) -> Result<String, AuthErr
     let ciphertext = cipher.encrypt(nonce, plaintext)
         .map_err(|e| AuthError::EncryptionError(e.to_string()))?;
 
-    let mut result = nonce_bytes.to_vec();
-    result.extend_from_slice(&ciphertext);
+    let mut combined = Vec::with_capacity(12 + ciphertext.len());
+    combined.extend_from_slice(&nonce_bytes);
+    combined.extend_from_slice(&ciphertext);
 
-    Ok(URL_SAFE_NO_PAD.encode(result))
+    Ok(URL_SAFE_NO_PAD.encode(&combined))
 }
 
 pub fn decrypt_aes_gcm(encrypted: &str, secret: &str) -> Result<Vec<u8>, AuthError> {
-    let data = URL_SAFE_NO_PAD.decode(encrypted)?;
-    
+    let data = URL_SAFE_NO_PAD.decode(encrypted)
+        .map_err(AuthError::Base64Error)?;
+
     if data.len() < 12 {
-        return Err(AuthError::InvalidInput("Ciphertext too short".into()));
+        return Err(AuthError::InvalidInput("Ciphertext too short".to_string()));
     }
+
+    let nonce_bytes = &data[..12];
+    let ciphertext = &data[12..];
 
     let mut key_bytes = [0u8; 32];
     let secret_bytes = secret.as_bytes();
@@ -80,11 +90,7 @@ pub fn decrypt_aes_gcm(encrypted: &str, secret: &str) -> Result<Vec<u8>, AuthErr
     let cipher = Aes256Gcm::new_from_slice(&key_bytes)
         .map_err(|e| AuthError::DecryptionError(e.to_string()))?;
     
-    let (nonce_bytes, ciphertext) = data.split_at(12);
     let nonce = Nonce::from_slice(nonce_bytes);
-
-    let plaintext = cipher.decrypt(nonce, ciphertext)
-        .map_err(|e| AuthError::DecryptionError(e.to_string()))?;
-
-    Ok(plaintext)
+    cipher.decrypt(nonce, ciphertext)
+        .map_err(|e| AuthError::DecryptionError(e.to_string()))
 }

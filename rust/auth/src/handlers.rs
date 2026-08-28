@@ -152,11 +152,11 @@ impl AuthSdk {
         };
 
         let payload = SessionPayload {
-            a: tokens.access_token,
-            r: tokens.refresh_token,
-            d: tokens.id_token,
-            s: sub,
-            x: chrono::Utc::now().timestamp() + expires_in,
+            access_token: tokens.access_token,
+            refresh_token: tokens.refresh_token,
+            id_token: tokens.id_token,
+            sub,
+            exp: chrono::Utc::now().timestamp() + expires_in,
         };
 
         let encrypted = encrypt_session(&payload, &cfg.session_secret)
@@ -182,20 +182,17 @@ impl AuthSdk {
         let p = decrypt_session(&session_cookie, &cfg.session_secret)
             .map_err(|_| ErrorResponse::unauthorized("invalid_session"))?;
 
-        if p.r.is_empty() {
-            return Err(ErrorResponse::unauthorized("fedcm_refresh_required"));
+        if p.refresh_token.is_empty() {
+            return Err(ErrorResponse::unauthorized("refresh_token_missing"));
         }
 
         let form = vec![
             ("grant_type", "refresh_token"),
-            ("refresh_token", p.r.as_str()),
+            ("refresh_token", p.refresh_token.as_str()),
             ("client_id", cfg.client_id.as_str()),
         ];
 
         let tokens = token_exchange(&cfg, &form).await.map_err(|_| {
-            // On refresh failure we should also clear the cookie, but since we return
-            // an error response the middleware can handle that; the client should
-            // redirect to login.
             ErrorResponse::unauthorized("refresh_failed")
         })?;
 
@@ -206,34 +203,32 @@ impl AuthSdk {
         };
 
         let new_payload = SessionPayload {
-            a: tokens.access_token,
-            r: tokens.refresh_token,
-            d: tokens.id_token,
-            s: p.s,
-            x: chrono::Utc::now().timestamp() + expires_in,
+            access_token: tokens.access_token,
+            refresh_token: tokens.refresh_token,
+            id_token: tokens.id_token,
+            sub: p.sub,
+            exp: chrono::Utc::now().timestamp() + expires_in,
         };
 
         let encrypted = encrypt_session(&new_payload, &cfg.session_secret)
             .map_err(|e| ErrorResponse::internal(&format!("encrypt_failed: {}", e)))?;
 
         let _cookie_header = build_session_cookie(&cfg, &encrypted, expires_in as u64);
-
-        // Return JSON with Set-Cookie header
         Ok(Json(serde_json::json!({ "ok": true })))
     }
 
     /// POST /auth/logout — clears the session cookie.
     pub async fn logout_handler(
         State(cfg): State<Arc<Config>>,
-    ) -> impl IntoResponse {
-        let clear_cookie = clear_session_cookie(&cfg);
+    ) -> ([(header::HeaderName, String); 1], Json<serde_json::Value>) {
+        let cookie_header = clear_session_cookie(&cfg);
         (
-            [(header::SET_COOKIE, clear_cookie)],
+            [(header::SET_COOKIE, cookie_header)],
             Json(serde_json::json!({ "ok": true })),
         )
     }
 
-    /// POST /auth/fedcm-exchange — exchanges a FedCM ID token for a session.
+    /// POST /auth/fedcm-exchange — exchanges a FedCM ID token for local session.
     pub async fn fedcm_exchange_handler(
         State(cfg): State<Arc<Config>>,
         Json(body): Json<FedcmExchangeRequest>,
@@ -266,11 +261,11 @@ impl AuthSdk {
         };
 
         let payload = SessionPayload {
-            a: tokens.access_token,
-            r: tokens.refresh_token,
-            d: tokens.id_token,
-            s: sub,
-            x: chrono::Utc::now().timestamp() + expires_in,
+            access_token: tokens.access_token,
+            refresh_token: tokens.refresh_token,
+            id_token: tokens.id_token,
+            sub,
+            exp: chrono::Utc::now().timestamp() + expires_in,
         };
 
         let encrypted = encrypt_session(&payload, &cfg.session_secret)
@@ -288,13 +283,13 @@ impl AuthSdk {
     pub async fn me_handler(
         axum::extract::Extension(payload): axum::extract::Extension<Arc<SessionPayload>>,
     ) -> Json<serde_json::Value> {
-        let sub = payload.s.clone();
+        let sub = payload.sub.clone();
 
-        if payload.d.is_empty() {
+        if payload.id_token.is_empty() {
             return Json(serde_json::json!({ "id": sub }));
         }
 
-        let claims = extract_all_claims(&payload.d);
+        let claims = extract_all_claims(&payload.id_token);
         match claims {
             None => Json(serde_json::json!({ "id": sub })),
             Some(all) => {

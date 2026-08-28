@@ -9,23 +9,27 @@ import (
 	"io"
 )
 
+// SessionPayload holds standard OAuth2 / OIDC token session data for third-party backend sessions.
 type SessionPayload struct {
-	A string `json:"a"`
-	R string `json:"r"`
-	D string `json:"d"`
-	S string `json:"s"`
-	X int64  `json:"x"`
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token,omitempty"`
+	IDToken      string `json:"id_token,omitempty"`
+	Subject      string `json:"sub"`
+	ExpiresAt    int64  `json:"exp"`
 }
 
+// UserInfo represents standard OIDC user claims.
 type UserInfo struct {
-	Sub    string `json:"sub"`
-	Name   string `json:"name,omitempty"`
-	Email  string `json:"email,omitempty"`
-	Phone  string `json:"phone,omitempty"`
-	Avatar string `json:"avatar,omitempty"`
+	Sub           string `json:"sub"`
+	Name          string `json:"name,omitempty"`
+	Email         string `json:"email,omitempty"`
+	EmailVerified bool   `json:"email_verified,omitempty"`
+	Phone         string `json:"phone,omitempty"`
+	PhoneVerified bool   `json:"phone_verified,omitempty"`
+	Avatar        string `json:"avatar,omitempty"`
 }
 
-// EncryptAesGcm encrypts plaintext using AES-256-GCM
+// EncryptAesGcm encrypts plaintext using standard AES-256-GCM for app session storage.
 func EncryptAesGcm(plaintext []byte, secret string) (string, error) {
 	key := make([]byte, 32)
 	copy(key, []byte(secret))
@@ -46,7 +50,7 @@ func EncryptAesGcm(plaintext []byte, secret string) (string, error) {
 	return base64.RawURLEncoding.EncodeToString(ciphertext), nil
 }
 
-// DecryptAesGcm decrypts ciphertext using AES-256-GCM and checks TTL
+// DecryptAesGcm decrypts ciphertext using standard AES-256-GCM.
 func DecryptAesGcm(encrypted string, secret string, ttlMs int64) ([]byte, error) {
 	key := make([]byte, 32)
 	copy(key, []byte(secret))

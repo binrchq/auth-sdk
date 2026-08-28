@@ -85,11 +85,11 @@ func (s *SDK) httpClient() *http.Client {
 // ─── Session Encryption ──────────────────────────────────────────────────────
 
 type sessionPayload struct {
-	A string `json:"a"`
-	R string `json:"r"`
-	D string `json:"d"`
-	S string `json:"s"`
-	X int64  `json:"x"`
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token,omitempty"`
+	IDToken      string `json:"id_token,omitempty"`
+	Subject      string `json:"sub"`
+	ExpiresAt    int64  `json:"exp"`
 }
 
 func (s *SDK) encryptSession(p sessionPayload) (string, error) {
@@ -226,11 +226,11 @@ func (s *SDK) CallbackHandler() gin.HandlerFunc {
 		}
 
 		encrypted, err := s.encryptSession(sessionPayload{
-			A: tokens.AccessToken,
-			R: tokens.RefreshToken,
-			D: tokens.IDToken,
-			S: sub,
-			X: time.Now().Unix() + int64(expiresIn),
+			AccessToken:  tokens.AccessToken,
+			RefreshToken: tokens.RefreshToken,
+			IDToken:      tokens.IDToken,
+			Subject:      sub,
+			ExpiresAt:    time.Now().Unix() + int64(expiresIn),
 		})
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "encrypt_failed"})
@@ -260,14 +260,14 @@ func (s *SDK) RefreshHandler() gin.HandlerFunc {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid_session"})
 			return
 		}
-		if p.R == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "fedcm_refresh_required"})
+		if p.RefreshToken == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "refresh_token_missing"})
 			return
 		}
 
 		form := url.Values{}
 		form.Set("grant_type", "refresh_token")
-		form.Set("refresh_token", p.R)
+		form.Set("refresh_token", p.RefreshToken)
 		form.Set("client_id", s.cfg.ClientID)
 
 		tokens, err := s.tokenExchange(c.Request.Context(), form)
@@ -283,11 +283,11 @@ func (s *SDK) RefreshHandler() gin.HandlerFunc {
 		}
 
 		encrypted, err := s.encryptSession(sessionPayload{
-			A: tokens.AccessToken,
-			R: tokens.RefreshToken,
-			D: tokens.IDToken,
-			S: p.S,
-			X: time.Now().Unix() + int64(expiresIn),
+			AccessToken:  tokens.AccessToken,
+			RefreshToken: tokens.RefreshToken,
+			IDToken:      tokens.IDToken,
+			Subject:      p.Subject,
+			ExpiresAt:    time.Now().Unix() + int64(expiresIn),
 		})
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "encrypt_failed"})
@@ -339,11 +339,11 @@ func (s *SDK) FedcmExchangeHandler() gin.HandlerFunc {
 		}
 
 		encrypted, err := s.encryptSession(sessionPayload{
-			A: tokens.AccessToken,
-			R: tokens.RefreshToken,
-			D: tokens.IDToken,
-			S: sub,
-			X: time.Now().Unix() + int64(expiresIn),
+			AccessToken:  tokens.AccessToken,
+			RefreshToken: tokens.RefreshToken,
+			IDToken:      tokens.IDToken,
+			Subject:      sub,
+			ExpiresAt:    time.Now().Unix() + int64(expiresIn),
 		})
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "encrypt_failed"})
@@ -366,12 +366,12 @@ func (s *SDK) MeHandler() gin.HandlerFunc {
 		}
 
 		p, ok := payloadVal.(*sessionPayload)
-		if !ok || p.D == "" {
+		if !ok || p.IDToken == "" {
 			c.JSON(http.StatusOK, gin.H{"id": sub})
 			return
 		}
 
-		claims := extractAllClaims(p.D)
+		claims := extractAllClaims(p.IDToken)
 		if claims == nil {
 			c.JSON(http.StatusOK, gin.H{"id": sub})
 			return
@@ -411,11 +411,11 @@ func (s *SDK) Middleware() gin.HandlerFunc {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid_session"})
 			return
 		}
-		if p.X > 0 && time.Now().Unix() > p.X {
+		if p.ExpiresAt > 0 && time.Now().Unix() > p.ExpiresAt {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "session_expired"})
 			return
 		}
-		c.Set("subject", p.S)
+		c.Set("subject", p.Subject)
 		c.Set("payload", p)
 		c.Next()
 	}
