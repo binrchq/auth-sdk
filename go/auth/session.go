@@ -1,4 +1,4 @@
-package core
+package auth
 
 import (
 	"crypto/aes"
@@ -29,8 +29,8 @@ type UserInfo struct {
 	Avatar        string `json:"avatar,omitempty"`
 }
 
-// EncryptAesGcm encrypts plaintext using standard AES-256-GCM for app session storage.
-func EncryptAesGcm(plaintext []byte, secret string) (string, error) {
+// encryptAesGcm encrypts plaintext using standard AES-256-GCM for app session storage.
+func encryptAesGcm(plaintext []byte, secret string) (string, error) {
 	key := make([]byte, 32)
 	copy(key, []byte(secret))
 
@@ -50,8 +50,8 @@ func EncryptAesGcm(plaintext []byte, secret string) (string, error) {
 	return base64.RawURLEncoding.EncodeToString(ciphertext), nil
 }
 
-// DecryptAesGcm decrypts ciphertext using standard AES-256-GCM.
-func DecryptAesGcm(encrypted string, secret string, ttlMs int64) ([]byte, error) {
+// decryptAesGcm decrypts ciphertext using standard AES-256-GCM.
+func decryptAesGcm(encrypted string, secret string) ([]byte, error) {
 	key := make([]byte, 32)
 	copy(key, []byte(secret))
 

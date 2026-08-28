@@ -13,7 +13,6 @@ import (
 	"strings"
 	"time"
 
-	core "binrc.com/auth-sdk/go/auth-core"
 	"github.com/gin-gonic/gin"
 )
 
@@ -94,11 +93,11 @@ type sessionPayload struct {
 
 func (s *SDK) encryptSession(p sessionPayload) (string, error) {
 	plaintext, _ := json.Marshal(p)
-	return core.EncryptAesGcm(plaintext, s.cfg.SessionSecret)
+	return encryptAesGcm(plaintext, s.cfg.SessionSecret)
 }
 
 func (s *SDK) decryptSession(encrypted string) (*sessionPayload, error) {
-	plaintext, err := core.DecryptAesGcm(encrypted, s.cfg.SessionSecret, 0)
+	plaintext, err := decryptAesGcm(encrypted, s.cfg.SessionSecret)
 	if err != nil {
 		return nil, err
 	}

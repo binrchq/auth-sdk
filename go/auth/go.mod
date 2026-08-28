@@ -2,12 +2,7 @@ module binrc.com/auth-sdk/go/auth
 
 go 1.24.1
 
-require (
-	binrc.com/auth-sdk/go/auth-core v0.0.0
-	github.com/gin-gonic/gin v1.10.0
-)
-
-replace binrc.com/auth-sdk/go/auth-core => ../auth-core
+require github.com/gin-gonic/gin v1.10.0
 
 require (
 	github.com/bytedance/gopkg v0.1.3 // indirect

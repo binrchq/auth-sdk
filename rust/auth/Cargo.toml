@@ -5,7 +5,7 @@ edition = "2021"
 description = "Binrc public auth SDK for Rust (Axum) — OIDC + PKCE server-side session handling"
 
 [dependencies]
-binrc-auth-core = { path = "../auth-core" }
+aes-gcm = "0.10"
 
 # Web framework
 axum = { version = "0.7", features = ["macros"] }
